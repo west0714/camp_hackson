@@ -3,7 +3,6 @@
 
 import { useState } from 'react';
 import DonateModal from './DonateModal';
-import { useUser } from '@/app/context/UserContext';
 
 type DonationData = {
   userName: string;
