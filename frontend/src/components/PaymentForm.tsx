@@ -53,6 +53,7 @@ function Checkout({ streamer_id, amount, onSuccess }: { streamer_id: string; amo
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
+  // streamer_idは現在使用されていないが、将来の拡張のために保持
 
   const handleSubmit = async () => {
     if (!stripe || !elements) return;

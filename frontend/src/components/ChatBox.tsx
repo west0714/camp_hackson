@@ -15,7 +15,7 @@ type ChatMessage = {
 };
 
 export default function ChatBox({ streamerId }: { streamerId: string }) {
-  const { userName, email } = useUser();
+  const { userName } = useUser();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 

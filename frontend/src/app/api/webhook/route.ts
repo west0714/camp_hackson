@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const amount = paymentIntent.amount;
     const comment = paymentIntent.metadata?.comment || '';
 
-    console.log(`✅ 支払い成功：ユーザー=${userId}、金額=${amount / 100}円、コメント=${comment}`);
+    console.log(`✅ 支払い成功：ユーザー=${userId}、ストリーマー=${streamerId}、金額=${amount / 100}円、コメント=${comment}`);
   }
 
   return NextResponse.json({ received: true });
