@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(req: Request) {
-  const { amount } = await req.json();
+  const { amount, comment, user_id, streamer_id } = await req.json();
 
   try {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -14,8 +14,9 @@ export async function POST(req: Request) {
       currency: 'jpy',
       automatic_payment_methods: { enabled: true }, // 支払い方法自動対応
         metadata: {
-            user_id: 'user_12345', // ← ユーザー情報
-            streamer_id: 'streamer_67890', // ← ストリーマー情報
+            user_id: user_id || '', // ← ユーザーID
+            streamer_id: streamer_id || '', // ← ストリーマーID
+            comment: comment || '', // ← コメントを保存（空の場合は空文字）
         },
     });
 

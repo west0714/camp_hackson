@@ -3,21 +3,47 @@
 
 import { useState } from 'react';
 import DonateModal from './DonateModal';
+import { useUser } from '@/app/context/UserContext';
 
+type DonationData = {
+  userName: string;
+  amount: number;
+  comment: string;
+};
 
-export default function DonateButton() {
+export default function DonateButton({ 
+  streamerId, 
+  onDonationSuccess 
+}: { 
+  streamerId: string; 
+  onDonationSuccess?: (donationData: DonationData) => void;
+}) {
+  const { userName } = useUser();
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleDonationSuccess = (donationData: DonationData) => {
+    // 支払い成功時のコールバックを呼び出し
+    if (onDonationSuccess) {
+      onDonationSuccess(donationData);
+    }
+  };
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700"
+        className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
       >
-        🎁 投げ銭する
+        募金
       </button>
 
-      {isOpen && <DonateModal onClose={() => setIsOpen(false)} />}
+      {isOpen && (
+        <DonateModal 
+          streamer_id={streamerId} 
+          onClose={() => setIsOpen(false)}
+          onDonationSuccess={handleDonationSuccess}
+        />
+      )}
     </>
   );
 }

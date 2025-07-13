@@ -9,7 +9,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
   const body = await req.text(); // ← raw body
-  const signature = req.headers.get('stripe-signature'); // ← 修正ポイント！
+  const signature = req.headers.get('stripe-signature'); // ← 修正
 
   if (!signature) {
     return new NextResponse('Missing Stripe signature header', { status: 400 });
@@ -29,9 +29,11 @@ export async function POST(req: Request) {
   if (event.type === 'payment_intent.succeeded') {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
     const userId = paymentIntent.metadata?.user_id || 'unknown';
+    const streamerId = paymentIntent.metadata?.streamer_id || 'unknown';
     const amount = paymentIntent.amount;
+    const comment = paymentIntent.metadata?.comment || '';
 
-    console.log(`✅ 支払い成功：ユーザー=${userId}、金額=${amount / 100}円`);
+    console.log(`✅ 支払い成功：ユーザー=${userId}、金額=${amount / 100}円、コメント=${comment}`);
   }
 
   return NextResponse.json({ received: true });
