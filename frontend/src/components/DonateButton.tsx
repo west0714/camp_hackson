@@ -18,8 +18,6 @@ export default function DonateButton({
   streamerId: string; 
   onDonationSuccess?: (donationData: DonationData) => void;
 }) {
-  const { userName } = useUser();
-  // userNameはDonateModalで使用されるため、ここでは使用しないが保持
   const [isOpen, setIsOpen] = useState(false);
 
   const handleDonationSuccess = (donationData: DonationData) => {

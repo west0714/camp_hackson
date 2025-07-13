@@ -44,16 +44,15 @@ export function PaymentForm({ streamer_id, amount, comment, onSuccess }: Props) 
 
   return (
     <Elements options={{ clientSecret }} stripe={stripePromise}>
-      <Checkout streamer_id={streamer_id} amount={amount} onSuccess={onSuccess} />
+      <Checkout amount={amount} onSuccess={onSuccess} />
     </Elements>
   );
 }
 
-function Checkout({ streamer_id, amount, onSuccess }: { streamer_id: string; amount: number; onSuccess: () => void }) {
+function Checkout({ amount, onSuccess }: { amount: number; onSuccess: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
-  // streamer_idは現在使用されていないが、将来の拡張のために保持
 
   const handleSubmit = async () => {
     if (!stripe || !elements) return;
