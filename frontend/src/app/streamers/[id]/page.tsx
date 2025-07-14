@@ -1,13 +1,16 @@
-'use client';
-
 import ChatBox from '@/components/ChatBox';
 import DonationStatus from '@/components/DonationStatus';
-import { use } from 'react';
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 
+export default async function StreamerPage({ params }: { params: Promise<{ id: string }> }) {
+  const streamerId = (await params).id;
 
-export default function StreamerPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const streamerId = resolvedParams.id;
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    redirect("/login"); // 未ログインならログインページへ
+  }
   
   return (
     <main className="min-h-screen bg-white p-6">
