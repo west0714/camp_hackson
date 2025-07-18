@@ -9,7 +9,7 @@ export default function Header() {
     <header className="bg-white shadow-md">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold text-green-700">
-          BokinChat
+          DonaCheer
         </Link>
 
         <nav className="flex items-center space-x-4">

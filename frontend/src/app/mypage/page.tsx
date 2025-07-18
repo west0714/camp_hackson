@@ -18,7 +18,6 @@ export default async function MyPage() {
           <h2 className="text-xl font-semibold mb-4">プロフィール</h2>
           <div className="space-y-2">
             <p><strong>名前:</strong> {session.user?.name}</p>
-            <p><strong>メール:</strong> {session.user?.email}</p>
           </div>
         </div>
 
