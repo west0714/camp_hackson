@@ -3,10 +3,8 @@
 
 import { useState } from 'react';
 import { PaymentForm } from './PaymentForm';
-import { useUser } from '@/app/context/UserContext';
 
 type DonationData = {
-  userName: string;
   amount: number;
   comment: string;
 };
@@ -18,7 +16,6 @@ type Props = {
 };
 
 export default function DonateModal({ streamer_id, onClose, onDonationSuccess }: Props) {
-  const { userName } = useUser();
   const [amount, setAmount] = useState<number>(0);
   const [comment, setComment] = useState<string>('');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -42,7 +39,6 @@ export default function DonateModal({ streamer_id, onClose, onDonationSuccess }:
     // 支払い成功時のコールバックを呼び出し
     if (onDonationSuccess) {
       onDonationSuccess({
-        userName: userName,
         amount: amount,
         comment: comment,
       });

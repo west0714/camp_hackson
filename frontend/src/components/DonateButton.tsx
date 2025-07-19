@@ -5,7 +5,6 @@ import { useState } from 'react';
 import DonateModal from './DonateModal';
 
 type DonationData = {
-  userName: string;
   amount: number;
   comment: string;
 };

@@ -1,15 +1,6 @@
 'use client';
 
-export default function DonationStatus() {
-  // 仮データ　
-  const donations = [
-    { id: 1, name: 'ユーザーA', amount: 500, comment: '応援してます！'},
-    { id: 2, name: 'ユーザーB', amount: 1000, comment: '配信楽しみにしてます'},
-    { id: 3, name: 'ユーザーC', amount: 300, comment: 'お疲れ様です！'},
-  ];
-
-  const totalAmount = donations.reduce((sum, donation) => sum + donation.amount, 0);
-
+export default function DonationStatus({ totalDonations }: { totalDonations?: number } = {}) {
   return (
     <div className="border border-gray-200 p-6 rounded-lg bg-white shadow-sm p-4 overflow-y-auto">
       <div className="p-4 border-b border-gray-200">
@@ -19,7 +10,7 @@ export default function DonationStatus() {
       {/* 合計金額 */}
       <div className="bg-green-50 border border-green-200 rounded p-3 mb-4">
         <p className="text-sm text-green-700">今日の合計</p>
-        <p className="text-2xl font-bold text-green-800">¥{totalAmount.toLocaleString()}</p>
+        <p className="text-2xl font-bold text-green-800">¥{totalDonations?.toLocaleString() || 0}</p>
       </div>
 
     </div>

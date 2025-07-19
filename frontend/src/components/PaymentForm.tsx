@@ -22,7 +22,7 @@ type Props = {
 };
 
 export function PaymentForm({ streamer_id, amount, comment, onSuccess }: Props) {
-  const { userName } = useUser();
+  const { id } = useUser();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,14 +31,14 @@ export function PaymentForm({ streamer_id, amount, comment, onSuccess }: Props) 
       body: JSON.stringify({ 
         amount: amount * 100,
         comment: comment || '',
-        user_id: userName || '',
+        user_id: id || '',
         streamer_id: streamer_id || '',
       }),
       headers: { 'Content-Type': 'application/json' },
     })
       .then((res) => res.json())
       .then((data) => setClientSecret(data.clientSecret));
-  }, [amount, comment, userName, streamer_id]);
+  }, [amount, comment, id, streamer_id]);
 
   if (!clientSecret) return <p>Loading...</p>;
 
