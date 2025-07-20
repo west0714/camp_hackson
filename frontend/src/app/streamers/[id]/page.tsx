@@ -72,7 +72,7 @@ export default function StreamerPage({ params }: { params: Promise<{ id: string 
     }).then(res => res.data);
 
   // 
-  const { data: DonationGet, mutate: mutateDonations } = useSWR(
+  const { data: DonationGet } = useSWR(
     streamerId && token ? [`https://geek-camp-hackason-back.onrender.com/api/v1/get_donations_amount?streamer_id=${streamerId}`, token] : null,
     ([url]) => fetcher(url),
     {

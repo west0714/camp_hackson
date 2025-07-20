@@ -3,7 +3,6 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
 import { useDonationTargets } from '@/hooks/useDonationTargets';
 
 export default function SignupPage() {
@@ -31,7 +30,7 @@ export default function SignupPage() {
 
     try {
       if (activeTab === 'user') {
-        const response = axios.post('https://geek-camp-hackason-back.onrender.com/api/v1/viewers', {
+        axios.post('https://geek-camp-hackason-back.onrender.com/api/v1/viewers', {
             viewer: {
                 name: userName,
                 email: email,
@@ -39,7 +38,7 @@ export default function SignupPage() {
             }
         });
       } else {
-        const response = axios.post('https://geek-camp-hackason-back.onrender.com/api/v1/streamers', {
+        axios.post('https://geek-camp-hackason-back.onrender.com/api/v1/streamers', {
             streamer: {
                 name: userName,
                 email: email,
