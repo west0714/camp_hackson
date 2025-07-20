@@ -24,12 +24,12 @@ export default function HomePage() {
         });
         setTotalDonations(res.data?.total_donation || 0);
         setTotalAmount(res.data?.total_amount || 0);
-      } catch (e) {
+      } catch {
         setTotalDonations(0);
       }
     };
     fetchTotalDonations();
-  }, [isLoading]);
+  }, [isLoading, token]);
 
   useEffect(() => {
     if (!isLoading && !id) {

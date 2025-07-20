@@ -92,7 +92,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       setUser({ isLoading: false, logout });
     }
-  }, []);
+  }, [logout]);
 
   return (
     <UserContext.Provider value={user}>
