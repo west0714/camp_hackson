@@ -4,6 +4,14 @@ import useSWR from 'swr';
 import axios from 'axios';
 import { useUser } from '@/app/context/UserContext';
 
+type DonationItem = {
+  content: string;
+  amount: number;
+  stream_name: string;
+  stream_date: string;
+};
+
+
 export default function MyPage() {
   const { id, userName, token } = useUser();
 
@@ -21,7 +29,7 @@ export default function MyPage() {
   );
 
   // 金額1円以上、最新10件だけ
-  const filtered = (data || []).filter((item: any) => item.amount > 0).slice(0, 10);
+  const filtered = (data || []).filter((item: DonationItem) => item.amount > 0).slice(0, 10);
 
   if (isLoading) {
     return (

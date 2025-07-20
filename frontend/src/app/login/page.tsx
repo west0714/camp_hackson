@@ -89,18 +89,21 @@ export default function LoginPage() {
       
       console.log('✅ ログイン成功:', userData);
       window.location.reload();
-    } catch (error: any) {
-      console.error('❌ ログイン失敗:', error);
-      if (error.response?.status === 401) {
-        setError('メールアドレスまたはパスワードが正しくありません。');
-      } else if (error.response?.status === 404) {
-        setError('ユーザーが見つかりません。');
-      } else {
-        setError('ログイン中にエラーが発生しました。しばらく時間をおいて再度お試しください。');
+      } catch (error: unknown) {
+        console.error('❌ ログイン失敗:', error);
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as { response?: { status?: number } };
+          if (axiosError.response?.status === 401) {
+            setError('メールアドレスまたはパスワードが正しくありません。');
+          } else if (axiosError.response?.status === 404) {
+            setError('ユーザーが見つかりません。');
+          } else {
+            setError('ログイン中にエラーが発生しました。しばらく時間をおいて再度お試しください。');
+          }
+        } else {
+          setError('ログイン中にエラーが発生しました。しばらく時間をおいて再度お試しください。');
+        }
       }
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
