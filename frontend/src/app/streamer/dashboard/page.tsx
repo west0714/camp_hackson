@@ -3,33 +3,77 @@ import { useState } from "react";
 import { useUser } from "@/app/context/UserContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import useSWR from 'swr';
+import axios from 'axios';
+import Link from 'next/link';
 
 export default function StreamerDashboard() {
-  // サンプルデータ（実際はAPIから取得）
-  {/* 配信者情報 APIから取得 */}
-  const streamerInfo = {
-    id: "1",
-    name: "田中ゲーマー",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face",
-    followers: 15420,
-    totalDonations: 234500,
-    isLive: false,
-  };
-  const { id, isLoading } = useUser();
+  const { id, userName, isLoading, token } = useUser();
   const router = useRouter();
-    
+
   useEffect(() => {
     if (!isLoading && !id) {
       router.push('/login');
     }
   }, [id, isLoading, router]);
 
-  const [isLive, setIsLive] = useState(streamerInfo.isLive);
+  // 認証付きfetcher
+  const fetcher = (url: string) =>
+    axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).then(res => res.data);
+
+  // 配信ステータスを取得?? live中だと返ってくる？
+  const { data, error } = useSWR(
+    id && token ? [`https://geek-camp-hackason-back.onrender.com/api/v1/streams?streamer_id=${id}`, token] : null,
+    ([url]) => fetcher(url)
+  );
+  console.log("配信ステータス：",data)
+  const countStream = data?.length - 1
+  const StreamID = data?.[countStream]?.id
+  console.log("id:", StreamID)
+  console.log("配信ステータスエラー：",error)
+
+  const [isLive, setIsLive] = useState(data?.[countStream]?.status || "ended");
   const [streamUrl, setStreamUrl] = useState("");
   const [streamTitle, setStreamTitle] = useState("");
-  const [streamCategory, setStreamCategory] = useState("");
   const [streamDescription, setStreamDescription] = useState("");
   const [showUrlInput, setShowUrlInput] = useState(false);
+
+  // dataが更新されたときにisLiveも更新
+  useEffect(() => {
+    if (data?.[countStream]?.status) {
+      setIsLive(data[countStream].status);
+    }
+    console.log("Live:", isLive)
+  }, [data]);
+
+
+  // 個人の寄付金額取得用
+  const [totalDonations, setTotalDonations] = useState<number>(0);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchTotalDonations = async () => {
+      try {
+        const res = await axios.get(`https://geek-camp-hackason-back.onrender.com/api/v1/get_donations_amount?streamer_id=${id}`,{
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        setTotalDonations(res.data?.total_donation || 0);
+        setTotalAmount(res.data?.total_amount || 0);
+      } catch (e) {
+        setTotalDonations(0);
+        setTotalAmount(0);
+      }
+    };
+    console.log(totalDonations)
+    fetchTotalDonations();
+  }, [id]);
 
   // URLからプラットフォーム情報を取得
   const getStreamPlatform = (url: string) => {
@@ -45,7 +89,7 @@ export default function StreamerDashboard() {
     return { platform: "other", channel: "その他" };
   };
 
-  const handleStartStream = () => {
+  const handleStartStream = async () => {
     if (!streamUrl.trim()) {
       alert("配信URLを入力してください");
       return;
@@ -54,20 +98,48 @@ export default function StreamerDashboard() {
       alert("配信タイトルを入力してください");
       return;
     }
-    
-    setIsLive(true);
+    //ストリーム情報を保存
+    try {
+      await axios.post('https://geek-camp-hackason-back.onrender.com/api/v1/streams', {
+        title:streamTitle,
+        description: streamDescription,
+        stream_url: streamUrl,
+        streamer_id: id,
+        status: "live"
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error: any) {
+      console.error('❌ API送信エラー:', error.response?.data || error.message);
+    }
+    setIsLive("live");
     setShowUrlInput(false);
-    // 実際はAPIに配信開始を通知
-    console.log("配信開始:", { streamUrl, streamTitle, streamCategory, streamDescription });
   };
 
-  const handleStopStream = () => {
-    setIsLive(false);
-    // 実際はAPIに配信停止を通知
+  const handleStopStream = async () => {
+    // 配信状態を変更
+    try {
+      await axios.patch(`https://geek-camp-hackason-back.onrender.com/api/v1/streams/${StreamID}`, {
+        status: "ended"
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error: any) {
+      console.error('❌ API送信エラー:', error.response?.data || error.message);
+    }
     console.log("配信停止");
+    setIsLive("ended");
   };
+
 
   const platformInfo = getStreamPlatform(streamUrl);
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -83,29 +155,20 @@ export default function StreamerDashboard() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <img
-                src={streamerInfo.avatar}
-                alt={streamerInfo.name}
-                className="w-16 h-16 rounded-full object-cover mr-4"
-              />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{streamerInfo.name}</h1>
-                <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                  <span>{streamerInfo.followers.toLocaleString()} フォロワー</span>
-                  <span>¥{streamerInfo.totalDonations.toLocaleString()} 総投げ銭</span>
-                </div>
+                <h1 className="text-2xl font-bold text-gray-900">{userName}</h1>
               </div>
             </div>
             <div className="flex items-center space-x-3">
               <div className={`flex items-center px-3 py-2 rounded-full text-sm font-medium ${
-                isLive 
+                isLive==="live" 
                   ? "bg-red-100 text-red-800" 
                   : "bg-gray-100 text-gray-800"
               }`}>
                 <div className={`w-2 h-2 rounded-full mr-2 ${
-                  isLive ? "bg-red-500" : "bg-gray-400"
+                  isLive==="live"  ? "bg-red-500" : "bg-gray-400"
                 }`}></div>
-                {isLive ? "配信中" : "オフライン"}
+                {isLive==="live"  ? "配信中" : "オフライン"}
               </div>
             </div>
           </div>
@@ -118,7 +181,7 @@ export default function StreamerDashboard() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">配信コントロール</h2>
               
-              {!isLive ? (
+              {isLive==="ended" ? (
                 <div className="space-y-4">
                   {/* 配信タイトル */}
                   <div>
@@ -132,26 +195,6 @@ export default function StreamerDashboard() {
                       placeholder="今日の配信タイトルを入力"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                  </div>
-
-                  {/* カテゴリ */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      カテゴリ
-                    </label>
-                    <select
-                      value={streamCategory}
-                      onChange={(e) => setStreamCategory(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">カテゴリを選択</option>
-                      <option value="ゲーム">ゲーム</option>
-                      <option value="雑談">雑談</option>
-                      <option value="音楽">音楽</option>
-                      <option value="料理">料理</option>
-                      <option value="勉強">勉強</option>
-                      <option value="その他">その他</option>
-                    </select>
                   </div>
 
                   {/* 説明 */}
@@ -259,9 +302,6 @@ export default function StreamerDashboard() {
                       <span className="text-lg font-semibold text-red-800">配信中</span>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">{streamTitle}</h3>
-                    {streamCategory && (
-                      <p className="text-gray-600 mb-2">カテゴリ: {streamCategory}</p>
-                    )}
                     {streamDescription && (
                       <p className="text-gray-700 text-sm">{streamDescription}</p>
                     )}
@@ -271,7 +311,7 @@ export default function StreamerDashboard() {
                     onClick={handleStopStream}
                     className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg text-lg"
                   >
-                    ⏹️ 配信終了
+                    配信終了
                   </button>
                 </div>
               )}
@@ -285,12 +325,12 @@ export default function StreamerDashboard() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">統計</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">フォロワー</span>
-                  <span className="font-semibold">{streamerInfo.followers.toLocaleString()}</span>
+                  <span className="text-gray-600">総投げ銭</span>
+                  <span className="font-semibold">¥{totalAmount}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">総投げ銭</span>
-                  <span className="font-semibold text-green-600">¥{streamerInfo.totalDonations.toLocaleString()}</span>
+                  <span className="text-gray-600">総寄付金額</span>
+                  <span className="font-semibold text-green-600">¥{totalDonations}</span>
                 </div>
               </div>
             </div>
@@ -299,25 +339,25 @@ export default function StreamerDashboard() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">クイックアクション</h3>
               <div className="space-y-3">
-                <a
-                  href={`/streamers/${streamerInfo.id}`}
+                <Link
+                  href={`/streamers/${id}`}
                   target="_blank"
                   className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-4 rounded-lg text-sm font-medium"
                 >
                   配信ページを開く
-                </a>
+                </Link>
                 <button
-                  onClick={() => navigator.clipboard.writeText(`${window.location.origin}/streamers/${streamerInfo.id}`)}
+                  onClick={() => navigator.clipboard.writeText(`${window.location.origin}/streamers/${id}`)}
                   className="block w-full bg-gray-100 hover:bg-gray-200 text-gray-800 text-center py-2 px-4 rounded-lg text-sm font-medium"
                 >
                   配信URLをコピー
                 </button>
-                <a
+                <Link
                   href="/streamers"
                   className="block w-full bg-green-100 hover:bg-green-200 text-green-800 text-center py-2 px-4 rounded-lg text-sm font-medium"
                 >
                   配信者一覧を見る
-                </a>
+                </Link>
               </div>
             </div>
           </div>

@@ -37,8 +37,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           'Authorization': `Bearer ${token}`
         }
       });
-
-      return response.data.userName || response.data.name || 'Unknown User';
+      console.log("zentai:", response.data)
+      console.log("yu-za-:", response.data.name)
+      return response.data.name || 'Unknown User';
     } catch (error) {
       console.error('ユーザーネーム取得エラー:', error);
       return 'Unknown User';
@@ -50,19 +51,25 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (session) {
       try {
         const userData = JSON.parse(session);
-        
-        // 初期状態を設定（userNameは後で取得）
+
+        // id, token, userTypeがなければ不正なセッションとして扱う
+        if (!userData.id || !userData.token || !userData.userType) {
+          localStorage.removeItem('userSession');
+          setUser({ isLoading: false, logout });
+          return;
+        }
+
         setUser({
           id: userData.id,
           token: userData.token,
           userType: userData.userType,
-          userName: userData.userName || undefined, // セッションに保存されている場合は使用
+          userName: userData.userName || undefined,
           isLoading: false,
           logout,
         });
 
-        // セッションにuserNameがない場合のみAPIから取得
-        if (!userData.userName && userData.id && userData.token && userData.userType) {
+        // userNameがなければAPIから取得
+        if (!userData.userName) {
           fetchUserName(userData.id, userData.token, userData.userType)
             .then(userName => {
               setUser(prev => ({
@@ -71,7 +78,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
               }));
             })
             .catch(() => {
-              // エラーの場合はデフォルト値を設定
               setUser(prev => ({
                 ...prev,
                 userName: 'Unknown User',

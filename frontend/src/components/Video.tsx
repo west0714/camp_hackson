@@ -12,20 +12,11 @@ type VideoProps = {
 };
 
 export default function Video({ params }: VideoProps) {
-  const [videoUrl, setVideoUrl] = useState("");
-  const [showVideoInput, setShowVideoInput] = useState(false);
+  const videoUrl = ""
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [twitchPlayer, setTwitchPlayer] = useState<any>(null);
-
-  const handleVideoUrlSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (videoUrl.trim()) {
-      // 動画URL更新処理（実際はAPIに送信）
-      console.log("動画URL更新:", videoUrl);
-      setShowVideoInput(false);
-    }
-  };
-
+  console.log(params.videoUrl)
+  
   // URLからプラットフォームとチャンネル情報を取得
   const getVideoInfo = (url: string | undefined) => {
     if (!url)
@@ -100,6 +91,8 @@ export default function Video({ params }: VideoProps) {
           height: "100%",
           autoplay: false,
           muted: true,
+          // parentに現在のホスト名を指定
+          parent: [window.location.hostname],
         });
         setTwitchPlayer(player);
         console.log("Twitchプレイヤー初期化完了:", channel);
@@ -124,12 +117,24 @@ export default function Video({ params }: VideoProps) {
     }
   }, []);
 
-  // YouTube URLをembed形式に変換（後方互換性のため残す）
-  const convertToEmbedUrl = (url: string) => {
-    const videoInfo = getVideoInfo(url);
-    return videoInfo.embedUrl || url;
-  };
+  useEffect(() => {
+    const currentUrl = videoUrl || params.videoUrl;
+    const videoInfo = getVideoInfo(currentUrl);
 
+    if (videoInfo.platform === "twitch" && videoInfo.channel) {
+      // Twitchスクリプトが読み込まれたらプレイヤーを初期化
+      const interval = setInterval(() => {
+        if (window.Twitch && window.Twitch.Player) {
+          initializeTwitchPlayer(videoInfo.channel);
+          clearInterval(interval);
+        }
+      }, 300);
+
+      // クリーンアップ
+      return () => clearInterval(interval);
+    }
+    // eslint-disable-next-line
+  }, [videoUrl, params.videoUrl]);
 
 
   return (
@@ -139,7 +144,6 @@ export default function Video({ params }: VideoProps) {
           {(() => {
             const currentUrl = videoUrl || params.videoUrl;
             const videoInfo = getVideoInfo(currentUrl);
-            console.log("URL:",`https://player.twitch.tv/?channel=${videoInfo.channel}&parent=localhost`)
             if (videoInfo.platform === "twitch") {
               return (
                 <>
@@ -169,7 +173,11 @@ export default function Video({ params }: VideoProps) {
               // YouTube または その他の動画
               return (
                 <iframe
-                  src={`https://player.twitch.tv/?channel=${videoInfo.channel}&parent=localhost`}
+                  src={
+                    videoInfo.platform === "twitch" 
+                      ? `https://player.twitch.tv/?channel=${videoInfo.channel}&parent=localhost`
+                      : videoInfo.embedUrl
+                  }
                   className="w-full h-full"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -279,13 +287,7 @@ export default function Video({ params }: VideoProps) {
                 d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
               />
             </svg>
-            <p className="text-gray-400">動画URLを設定してください</p>
-            <button
-              onClick={() => setShowVideoInput(true)}
-              className="mt-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
-            >
-              動画を設定
-            </button>
+
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ import Video from '@/components/Video';
 import useSWR from 'swr';
 import { authFetcher, createAuthSWRKey } from '@/lib/swr';
 import axios from 'axios';
+import { useDonationTargets } from '@/hooks/useDonationTargets';
 
 // 型定義: window.Twitch を追加
 declare global {
@@ -34,6 +35,7 @@ type Streamer = {
   youtube_url: string | null;
   twitch_url: string | null;
   donation_share_ratio: number;
+  donation_target_id: number;
   created_at: string;
   updated_at: string;
 };
@@ -47,25 +49,49 @@ type VideoParams = {
   videoUrl?: string;
 };
 
+
 export default function StreamerPage({ params }: { params: Promise<{ id: string }> }) {
   const [streamerId, setStreamerId] = useState<string>('');
   const { id, token, isLoading } = useUser();
   const router = useRouter();
-
+  
+  // 寄付先データを取得（常に呼び出す）
+  const { donationTargets } = useDonationTargets();
+  
   // 個人の寄付金額取得用
   const [totalDonations, setTotalDonations] = useState<number>(0);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  
+  // 認証付きfetcher
+
+  const fetcher = (url: string) =>
+    axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).then(res => res.data);
+
+  // 
+  const { data: DonationGet, mutate: mutateDonations } = useSWR(
+    streamerId && token ? [`https://geek-camp-hackason-back.onrender.com/api/v1/get_donations_amount?streamer_id=${streamerId}`, token] : null,
+    ([url]) => fetcher(url),
+    {
+      refreshInterval: 5000, // 5秒ごとに自動更新
+      revalidateOnFocus: true, // フォーカス時に再検証
+      revalidateOnReconnect: true, // 再接続時に再検証
+    }
+  )
+  console.log("DonationGet:", DonationGet)
+  console.log("streamerId:", streamerId)
+
+  // DonationGetが変更された時に状態を更新
   useEffect(() => {
-    if (!streamerId) return;
-    const fetchTotalDonations = async () => {
-      try {
-        const res = await axios.get(`https://geek-camp-hackason-back.onrender.com/api/v1/get_donations_amount?streamer_id=${streamerId}`);
-        setTotalDonations(res.data?.amount || 0);
-      } catch (e) {
-        setTotalDonations(0);
-      }
-    };
-    fetchTotalDonations();
-  }, [streamerId]);
+    if (DonationGet) {
+      console.log("Updating donation amounts:", DonationGet);
+      setTotalDonations(DonationGet.total_donation || 0);
+      setTotalAmount(DonationGet.total_amount || 0);
+    }
+  }, [DonationGet]);
 
   // paramsを非同期で取得
   useEffect(() => {
@@ -80,13 +106,16 @@ export default function StreamerPage({ params }: { params: Promise<{ id: string 
     authFetcher
   );
 
+  
   // streamer_idをAPIに投げてstream_idを取得
-  const { data: streamIdData, error: streamIdError, isLoading: streamIdLoading } = useSWR<Stream>(
+  const { data: streamIdData, error: streamIdError, isLoading: streamIdLoading } = useSWR<Stream[]>(
     streamerId && token 
       ? createAuthSWRKey(`https://geek-camp-hackason-back.onrender.com/api/v1/get_selected_streamers_stream?streamer_id=${streamerId}`, token)
       : null,
     authFetcher
   );
+  console.log("getStream", streamIdData)
+  console.log("url",streamIdData?.[0]?.stream_url)
 
   useEffect(() => {
     if (!isLoading && !id) {
@@ -137,6 +166,7 @@ export default function StreamerPage({ params }: { params: Promise<{ id: string 
   // 一覧データから該当する配信者を検索
   const streamerFromList = streamersList?.find(s => s.id.toString() === streamerId);
 
+
   // 配信者が見つからない場合のエラー表示
   if (!streamerFromList) {
     return (
@@ -160,10 +190,17 @@ export default function StreamerPage({ params }: { params: Promise<{ id: string 
   // Videoコンポーネント用のデータを作成
   const videoParams: VideoParams = {
     id: streamerId,
-    stream_id: streamIdData?.id?.toString() || streamerId, // Stream.idをstream_idとして使用
+    stream_id: streamIdData?.[0]?.id?.toString() || streamerId, // Stream.idをstream_idとして使用
     name: streamerFromList.name,
-    streamTitle: streamIdData?.title || "新作RPGを初見プレイ！一緒に冒険しよう",
-    videoUrl: streamIdData?.stream_url || "https://www.twitch.tv/tyasyu01",
+    streamTitle: streamIdData?.[0]?.title || "新作RPGを初見プレイ！一緒に冒険しよう",
+    videoUrl: streamIdData?.[0]?.stream_url || "",
+  };
+
+  // 配信者情報を表示する部分で、donation_target_idをnameに変換
+  const getDonationTargetName = (targetId: number) => {
+    if (!donationTargets || !Array.isArray(donationTargets)) return '';
+    const target = donationTargets.find(t => t.id === targetId);
+    return target ? target.name : '';
   };
 
   return (
@@ -174,6 +211,8 @@ export default function StreamerPage({ params }: { params: Promise<{ id: string 
         <div className="flex items-center space-x-4">
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">{streamerFromList.name}</h1>
+            <p className='text-xl pt-2'>{streamIdData?.[0]?.title}</p>
+            <p>{getDonationTargetName(streamerFromList.donation_target_id)}</p>
           </div>
         </div>
       </div>
@@ -186,10 +225,10 @@ export default function StreamerPage({ params }: { params: Promise<{ id: string 
           <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
             <Video params={videoParams} />
           </div>
-          <DonationStatus totalDonations={totalDonations} />
+          <DonationStatus totalDonations={totalDonations} totalAmount={totalAmount} />
         </div>
         {/* 右カラム（1/3幅） */}
-        <div>
+        <div className='h-full flex flex-col'>
           <ChatBox streamerId={streamerId} stream_id={videoParams.stream_id} />
         </div>
 

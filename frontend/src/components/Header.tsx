@@ -20,7 +20,11 @@ export default function Header() {
             <>
               <Link href="/" className="text-gray-700 hover:text-green-600">ホーム</Link>
               <Link href="/streamers" className="text-gray-700 hover:text-green-600">配信者一覧</Link>
-              <Link href="/mypage" className="text-gray-700 hover:text-green-600">マイページ</Link>
+              {userType === 'streamer' ? (
+                <Link href="/streamer/dashboard" className="text-gray-700 hover:text-green-600">マイページ</Link>
+              ) : (
+                <Link href="/mypage" className="text-gray-700 hover:text-green-600">マイページ</Link>
+              )}
               <span className="text-gray-600">
                 {userName && userName !== 'Unknown User' ? (
                   `こんにちは、${userName}さん`
@@ -37,7 +41,7 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link href="/login" className="text-gray-700 hover:text-green-600">ログイン</Link>
+              <Link href='/signup' className='text-gray-700 hover:text-green-600 px-3 py-1 rounded border border-gray-300 hover:border-green-600'>サインアップ</Link>
             </>
           )}
         </nav>

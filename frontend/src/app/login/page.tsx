@@ -3,6 +3,7 @@
 import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/app/context/UserContext';
 
 interface LoginResponse {
   token: string;
@@ -18,13 +19,14 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  const { id, isLoading: userLoading } = useUser();
+
   // ページロード時にセッションをチェック
   useEffect(() => {
-    const session = localStorage.getItem('userSession');
-    if (session) {
+    if (!userLoading && id) {
       router.push('/');
     }
-  }, [router]);
+  }, [id, userLoading, router]);
 
   // ユーザーネームをAPIから取得
   const fetchUserName = async (id: string, token: string, userType: string) => {
@@ -86,7 +88,7 @@ export default function LoginPage() {
       localStorage.setItem('userSession', JSON.stringify(userData));
       
       console.log('✅ ログイン成功:', userData);
-      router.push('/');
+      window.location.reload();
     } catch (error: any) {
       console.error('❌ ログイン失敗:', error);
       if (error.response?.status === 401) {
@@ -102,7 +104,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50">
+    <main className="flex min-h-screen items-center justify-center bg-white">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-bold text-green-700 text-center mb-8">DonaCheer</h1>
         

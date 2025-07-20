@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import useSWR from 'swr';
 import { createAuthSWRKey, authFetcher } from '@/lib/swr';
+import { useDonationTargets } from '@/hooks/useDonationTargets';
 
 type Streamer = {
   id: number;
@@ -14,6 +15,7 @@ type Streamer = {
   youtube_url: string | null;
   twitch_url: string | null;
   donation_share_ratio: number;
+  donation_target_id: number;
   created_at: string;
   updated_at: string;
 };
@@ -36,6 +38,9 @@ export default function StreamersPage() {
       },
     }
   );
+
+  const {donationTargets} = useDonationTargets();
+  console.log(donationTargets)
 
   useEffect(() => {
     if (!isLoading && !id) {
@@ -100,6 +105,13 @@ export default function StreamersPage() {
   // データが配列でない場合の処理
   const streamers = Array.isArray(data) ? data : [];
 
+  // 配信者情報を表示する部分で、donation_target_idをnameに変換
+  const getDonationTargetName = (targetId: number) => {
+    if (!donationTargets || !Array.isArray(donationTargets)) return '';
+    const target = donationTargets.find(t => t.id === targetId);
+    return target ? target.name : '';
+  };
+
   return (
     <main className="min-h-screen p-6 bg-white">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">配信者一覧</h1>
@@ -124,21 +136,25 @@ export default function StreamersPage() {
                         {streamer.name}
                       </h3>
                     </div>
-                    <p className="text-sm text-gray-600">配信者ID: {streamer.id}</p>
-                    {streamer.youtube_url && (
-                      <p className="text-sm text-blue-600">
-                        <a href={streamer.youtube_url} target="_blank" rel="noopener noreferrer">
-                          YouTube
-                        </a>
-                      </p>
-                    )}
-                    {streamer.twitch_url && (
-                      <p className="text-sm text-purple-600">
-                        <a href={streamer.twitch_url} target="_blank" rel="noopener noreferrer">
-                          Twitch
-                        </a>
-                      </p>
-                    )}
+                    <div className=''>
+                      {streamer.youtube_url && (
+                        <p className="text-sm text-red-600">
+                          <a href={streamer.youtube_url} target="_blank" rel="noopener noreferrer">
+                            YouTube
+                          </a>
+                        </p>
+                      )}
+                      {streamer.twitch_url && (
+                        <p className="text-sm text-purple-600">
+                          <a href={streamer.twitch_url} target="_blank" rel="noopener noreferrer">
+                            Twitch
+                          </a>
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <p>{getDonationTargetName(streamer.donation_target_id)}</p>
+                    </div>
                   </div>
                 </div>
 

@@ -122,7 +122,7 @@ export default function ChatBox({ streamerId, stream_id }: { streamerId: string;
         <h2 className="text-lg font-semibold text-gray-900">チャット</h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-3" style={{ maxHeight: '400px' }}>
+      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-3" style={{ maxHeight: '450px' }}>
         {messages.map((msg, index) => (
           <div key={index} className={`${msg.type === 'donation' ? 'bg-yellow-50 border border-yellow-200 rounded-lg p-3' : ''}`}>
             <div className="flex items-start space-x-2">

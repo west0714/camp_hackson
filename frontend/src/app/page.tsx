@@ -7,22 +7,29 @@ import { useUser } from '@/app/context/UserContext';
 import axios from 'axios';
 
 export default function HomePage() {
-  const { id, isLoading } = useUser();
+  const { id, isLoading, token } = useUser();
   const router = useRouter();
 
   // 全体の寄付金額取得
   const [totalDonations, setTotalDonations] = useState<number>(0);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
   useEffect(() => {
+    if (isLoading || !token) return; // isLoadingがtrueの間はAPIリクエストしない
     const fetchTotalDonations = async () => {
       try {
-        const res = await axios.get('https://geek-camp-hackason-back.onrender.com/api/v1/get_donations_amount');
-        setTotalDonations(res.data?.amount || 0);
+        const res = await axios.get('https://geek-camp-hackason-back.onrender.com/api/v1/get_donations_amount', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        setTotalDonations(res.data?.total_donation || 0);
+        setTotalAmount(res.data?.total_amount || 0);
       } catch (e) {
         setTotalDonations(0);
       }
     };
     fetchTotalDonations();
-  }, []);
+  }, [isLoading]);
 
   useEffect(() => {
     if (!isLoading && !id) {
@@ -30,8 +37,6 @@ export default function HomePage() {
     }
   }, [id, isLoading, router]);
 
-  //全体の寄付金額をAPIで取得
-  
 
   if (isLoading) {
     return (
@@ -61,14 +66,14 @@ export default function HomePage() {
       </div>
 
       {/* 統計情報 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
           <div className="text-3xl font-bold text-green-600 mb-2">¥{totalDonations.toLocaleString()}</div>
           <div className="text-gray-600">総投げ銭額</div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
-          <div className="text-3xl font-bold text-purple-600 mb-2">89,012</div>
-          <div className="text-gray-600">応援メッセージ数</div>
+          <div className="text-3xl font-bold text-green-600 mb-2">¥{totalAmount.toLocaleString()}</div>
+          <div className="text-gray-600">募金銭額</div>
         </div>
       </div>
 
