@@ -52,7 +52,7 @@ export default function SignupPage() {
       }
       alert('アカウント作成に成功しました。ログインしてください')
       router.push('/login');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ サインアップ失敗:', error);
     } finally {
       setIsLoading(false);

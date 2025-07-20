@@ -112,9 +112,12 @@ export default function StreamerDashboard() {
           Authorization: `Bearer ${token}`,
         },
       });
-    } catch (error: any) {
-      console.error('❌ API送信エラー:', error.response?.data || error.message);
-    }
+    } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          console.error(error.response?.data);
+      } else {
+        console.error('Unknown error');
+    }}
     setIsLive("live");
     setShowUrlInput(false);
   };
@@ -130,9 +133,12 @@ export default function StreamerDashboard() {
           Authorization: `Bearer ${token}`,
         },
       });
-    } catch (error: any) {
-      console.error('❌ API送信エラー:', error.response?.data || error.message);
-    }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+          console.error(error.response?.data);
+      } else {
+        console.error('Unknown error');
+    }}
     console.log("配信停止");
     setIsLive("ended");
   };

@@ -61,8 +61,12 @@ export default function ChatBox({ streamerId, stream_id }: { streamerId: string;
           Authorization: `Bearer ${token}`,
         },
       });
-    } catch (error: any) {
-      console.error('❌ API送信エラー:', error.response?.data || error.message);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+          console.error(error.response?.data);
+      } else {
+        console.error('Unknown error');
+    }
     }
   };
 

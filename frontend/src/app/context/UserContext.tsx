@@ -108,3 +108,5 @@ export const useUser = () => {
   }
   return context;
 };
+
+// eslint-disable-next-line react-hooks/exhaustive-deps

@@ -24,7 +24,7 @@ export default function HomePage() {
         });
         setTotalDonations(res.data?.total_donation || 0);
         setTotalAmount(res.data?.total_amount || 0);
-      } catch (e) {
+      } catch {
         setTotalDonations(0);
       }
     };
@@ -68,11 +68,11 @@ export default function HomePage() {
       {/* 統計情報 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
-          <div className="text-3xl font-bold text-green-600 mb-2">¥{totalDonations.toLocaleString()}</div>
+          <div className="text-3xl font-bold text-green-600 mb-2">¥{totalAmount.toLocaleString()}</div>
           <div className="text-gray-600">総投げ銭額</div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
-          <div className="text-3xl font-bold text-green-600 mb-2">¥{totalAmount.toLocaleString()}</div>
+          <div className="text-3xl font-bold text-green-600 mb-2">¥{totalDonations.toLocaleString()}</div>
           <div className="text-gray-600">募金銭額</div>
         </div>
       </div>
