@@ -21,12 +21,7 @@ export default function MyPage() {
   );
 
   // 金額1円以上、最新10件だけ
-  const filtered = (data || []).filter((item: unknown) => {
-    if (item && typeof item === 'object' && 'amount' in item && typeof (item as { amount: unknown }).amount === 'number') {
-      return (item as { amount: number }).amount > 0;
-    }
-    return false;
-  }).slice(0, 10);
+  const filtered = (data || []).filter((item: any) => item.amount > 0).slice(0, 10);
 
   if (isLoading) {
     return (
@@ -74,20 +69,14 @@ export default function MyPage() {
             <p className="text-gray-600">まだ投げ銭履歴はありません。</p>
           ) : (
             <ul>
-              {filtered.map((item: unknown, idx: number) => {
-                if (item && typeof item === 'object' && 'content' in item && 'amount' in item && 'stream_name' in item && 'stream_date' in item) {
-                  const typedItem = item as { content: string; amount: number; stream_name: string; stream_date: string };
-                  return (
-                    <li key={idx} className="border-b py-2">
-                      <div>内容: {typedItem.content}</div>
-                      <div>金額: <span className="font-bold text-green-700">¥{typedItem.amount}</span></div>
-                      <div>配信名: {typedItem.stream_name}</div>
-                      <div>日付: {typedItem.stream_date}</div>
-                    </li>
-                  );
-                }
-                return null;
-              })}
+              {filtered.map((item: any, idx: number) => (
+                <li key={idx} className="border-b py-2">
+                  <div>内容: {item.content}</div>
+                  <div>金額: <span className="font-bold text-green-700">¥{item.amount}</span></div>
+                  <div>配信名: {item.stream_name}</div>
+                  <div>日付: {item.stream_date}</div>
+                </li>
+              ))}
             </ul>
           )}
         </div>

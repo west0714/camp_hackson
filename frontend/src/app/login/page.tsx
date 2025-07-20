@@ -89,17 +89,12 @@ export default function LoginPage() {
       
       console.log('✅ ログイン成功:', userData);
       window.location.reload();
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('❌ ログイン失敗:', error);
-      if (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'status' in error.response) {
-        const status = (error.response as { status: number }).status;
-        if (status === 401) {
-          setError('メールアドレスまたはパスワードが正しくありません。');
-        } else if (status === 404) {
-          setError('ユーザーが見つかりません。');
-        } else {
-          setError('ログイン中にエラーが発生しました。しばらく時間をおいて再度お試しください。');
-        }
+      if (error.response?.status === 401) {
+        setError('メールアドレスまたはパスワードが正しくありません。');
+      } else if (error.response?.status === 404) {
+        setError('ユーザーが見つかりません。');
       } else {
         setError('ログイン中にエラーが発生しました。しばらく時間をおいて再度お試しください。');
       }
